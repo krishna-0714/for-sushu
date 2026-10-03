@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Our Story • For Sushma</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Three.js for 3D Floating Hearts & Ambient Effects -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Three.js 3D Background Canvas -->
+  <canvas id="three-canvas" aria-hidden="true"></canvas>
+
+  <!-- Ambient Light Vignette & Overlays -->
+  <div class="ambient-vignette" aria-hidden="true"></div>
+
+  <!-- Background Music Player: Heartbeat_in_Your_Name.mp4 at 50% volume -->
+  <video id="bg-music" src="Heartbeat_in_Your_Name.mp4" playsinline loop preload="auto" style="position:fixed; top:-9999px; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;" aria-hidden="true"></video>
+
+  <!-- PASSCODE GATE OVERLAY (2431) -->
+  <section id="lock-screen" class="lock-screen" aria-label="Passcode Protected Entry">
+    <div class="lock-card">
+      <div class="lock-heart-icon">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      </div>
+      <p class="lock-subtitle">A special chapter kept safe</p>
+      <h1 class="lock-title">Our Story</h1>
+      <p class="lock-instructions">Enter the 4-digit key to unlock</p>
+
+      <!-- PIN Input Display -->
+      <div class="pin-display" id="pin-display" role="status" aria-live="polite">
+        <span class="pin-dot" data-index="0"></span>
+        <span class="pin-dot" data-index="1"></span>
+        <span class="pin-dot" data-index="2"></span>
+        <span class="pin-dot" data-index="3"></span>
+      </div>
+
+      <!-- Error / Status Message -->
+      <div class="lock-msg" id="lock-msg" aria-live="polite"></div>
+
+      <!-- Romantic Mobile-Friendly Keypad -->
+      <div class="keypad" id="keypad" aria-label="PIN Keypad">
+        <button type="button" class="key-btn" data-key="1">1</button>
+        <button type="button" class="key-btn" data-key="2">2</button>
+        <button type="button" class="key-btn" data-key="3">3</button>
+        <button type="button" class="key-btn" data-key="4">4</button>
+        <button type="button" class="key-btn" data-key="5">5</button>
+        <button type="button" class="key-btn" data-key="6">6</button>
+        <button type="button" class="key-btn" data-key="7">7</button>
+        <button type="button" class="key-btn" data-key="8">8</button>
+        <button type="button" class="key-btn" data-key="9">9</button>
+        <button type="button" class="key-btn action-key" data-key="clear" title="Clear">C</button>
+        <button type="button" class="key-btn" data-key="0">0</button>
+        <button type="button" class="key-btn action-key" data-key="backspace" title="Delete">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/>
+            <line x1="18" y1="9" x2="12" y2="15"/>
+            <line x1="12" y1="9" x2="18" y2="15"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="lock-hint-container">
+        <button type="button" id="hint-btn" class="hint-btn">Need a hint?</button>
+        <p id="hint-text" class="hint-text hidden">A special 4-digit code (2431)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN STORY CONTENT (REVEALED AFTER UNLOCK) -->
+  <main id="main-content" class="main-content hidden-content">
+
+    <!-- FLOATING TOP NAVIGATION / CONTROLS -->
+    <header class="top-nav" aria-label="Controls">
+      <div class="nav-brand">
+        <span class="nav-heart">♥</span>
+        <span class="nav-title">For Sushma</span>
+      </div>
+      <div class="nav-actions">
+        <!-- Audio Music Toggle: Plays Heartbeat_in_Your_Name.mp4 at 50% volume -->
+        <button type="button" id="music-toggle" class="nav-btn music-btn" aria-label="Toggle Heartbeat in Your Name" title="Heartbeat in Your Name (50% Volume)">
+          <span class="music-icon" id="music-icon">🎵</span>
+          <span class="music-text" id="music-text">Heartbeat in Your Name</span>
+          <span class="music-vol-badge" id="music-vol-badge">50%</span>
+          <span class="music-wave" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
+        <button type="button" id="lock-btn" class="nav-btn lock-nav-btn" aria-label="Lock Website" title="Lock Website">
+          🔒
+        </button>
+      </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero-section" id="hero">
+      <div class="hero-container">
+        <span class="hero-badge">Cherished Memories</span>
+        <h1 class="hero-title">Our Story</h1>
+        <p class="hero-subtitle">Every smile, every journey, and the moments that will forever hold a special place in my heart.</p>
+        
+        <div class="hero-script">From the first day our paths crossed, to today and always</div>
+
+        <!-- LIVE MOMENTUM / TIME EMBRACE COUNTER -->
+        <div class="journey-counter-card">
+          <div class="counter-header">
+            <span class="counter-heart">❤️</span>
+            <span>Every single day has meant the world</span>
+          </div>
+          <div class="counter-grid">
+            <div class="counter-box">
+              <span class="counter-num" id="count-days">--</span>
+              <span class="counter-lbl">Days</span>
+            </div>
+            <div class="counter-sep">:</div>
+            <div class="counter-box">
+              <span class="counter-num" id="count-hours">--</span>
+              <span class="counter-lbl">Hours</span>
+            </div>
+            <div class="counter-sep">:</div>
+            <div class="counter-box">
+              <span class="counter-num" id="count-mins">--</span>
+              <span class="counter-lbl">Mins</span>
+            </div>
+            <div class="counter-sep">:</div>
+            <div class="counter-box">
+              <span class="counter-num" id="count-secs">--</span>
+              <span class="counter-lbl">Secs</span>
+            </div>
+          </div>
+          <p class="counter-note">Holding on to the beauty of our memories</p>
+        </div>
+
+        <a href="#chapters" class="scroll-down-cue" aria-label="Scroll to Chapters">
+          <span>Relive our journey</span>
+          <div class="bouncing-heart">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- CHAPTERS TIMELINE SECTION -->
+    <section class="chapters-section" id="chapters">
+      <div class="section-header">
+        <span class="section-tag">Chapter by Chapter</span>
+        <h2 class="section-title">Milestones We Shared</h2>
+        <p class="section-desc">Six unforgettable moments that defined our story together.</p>
+      </div>
+
+      <div class="timeline-container">
+        <div class="timeline-line" aria-hidden="true"></div>
+
+        <!-- CHAPTER 1: Where It All Began (Landscape - Both upright side-by-side) -->
+        <article class="timeline-item" data-index="1">
+          <div class="timeline-marker">
+            <span class="marker-dot"></span>
+            <span class="marker-num">01</span>
+          </div>
+          <div class="timeline-card tilt-card is-landscape" data-tilt>
+            <div class="card-glow"></div>
+            <div class="card-media is-landscape">
+              <div class="card-media-backdrop" style="background-image: url('first picture.jpg');"></div>
+              <img src="first picture.jpg" alt="Our very first photo together at NRI Institute of Technology" loading="lazy" class="card-img" />
+              <div class="media-overlay">
+                <button type="button" class="zoom-btn" data-full="first picture.jpg" data-caption="Where It All Began — NRI Institute of Technology" aria-label="View photo in full size">
+                  🔍 View Full
+                </button>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="card-meta">
+                <span class="meta-tag">College Days</span>
+                <span class="meta-dot">•</span>
+                <span class="meta-place">NRI Institute of Technology</span>
+              </div>
+              <h3 class="card-title">Where It All Began</h3>
+              <p class="card-text">
+                Two college ID lanyards, bustling campus corridors, and a quiet moment that quietly marked the start of everything. Neither of us could have imagined how meaningful this first picture would become.
+              </p>
+              <div class="card-footnote">
+                <span class="card-heart">♥</span> The very first memory captured
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- CHAPTER 2: The Three Words (DM screenshot - Portrait) -->
+        <article class="timeline-item reversed" data-index="2">
+          <div class="timeline-marker">
+            <span class="marker-dot"></span>
+            <span class="marker-num">02</span>
+          </div>
+          <div class="timeline-card tilt-card is-portrait is-dm" data-tilt>
+            <div class="card-glow"></div>
+            <div class="card-media is-portrait is-dm">
+              <div class="card-media-backdrop" style="background-image: url('first proposed pic.jpeg');"></div>
+              <img src="first proposed pic.jpeg" alt="Screenshot of Sushma saying I love you on Instagram" loading="lazy" class="card-img" />
+              <div class="media-overlay">
+                <button type="button" class="zoom-btn" data-full="first proposed pic.jpeg" data-caption="The Three Words — That unforgettable message" aria-label="View photo in full size">
+                  🔍 View Full
+                </button>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="card-meta">
+                <span class="meta-tag">Milestone</span>
+                <span class="meta-dot">•</span>
+                <span class="meta-place">That Unforgettable Message</span>
+              </div>
+              <h3 class="card-title">The Three Words</h3>
+              <p class="card-text">
+                A simple notification that made time stand completely still. In just three words, you gave me a feeling of warmth, butterflies, and happiness that words can barely describe.
+              </p>
+              <div class="card-quote">
+                "I love you ❤️"
+              </div>
+              <div class="card-footnote">
+                <span class="card-heart">♥</span> A screenshot I'll keep forever
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- CHAPTER 3: First Beach Trip (Portrait - Both full length by the ocean) -->
+        <article class="timeline-item" data-index="3">
+          <div class="timeline-marker">
+            <span class="marker-dot"></span>
+            <span class="marker-num">03</span>
+          </div>
+          <div class="timeline-card tilt-card is-portrait" data-tilt>
+            <div class="card-glow"></div>
+            <div class="card-media is-portrait">
+              <div class="card-media-backdrop" style="background-image: url('our first beach to view and first trip together.jpg');"></div>
+              <img src="our first beach to view and first trip together.jpg" alt="Our first trip together standing by the ocean beach" loading="lazy" class="card-img" />
+              <div class="media-overlay">
+                <button type="button" class="zoom-btn" data-full="our first beach to view and first trip together.jpg" data-caption="The Ocean Breeze — Our very first trip together" aria-label="View photo in full size">
+                  🔍 View Full
+                </button>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="card-meta">
+                <span class="meta-tag">First Trip</span>
+                <span class="meta-dot">•</span>
+                <span class="meta-place">By the Sea</span>
+              </div>
+              <h3 class="card-title">The Sea Breeze & Our First Escape</h3>
+              <p class="card-text">
+                The sound of crashing waves, wet sand beneath our feet, and the ocean wind in your hair. Seeing your genuine, radiant laugh with the tide rolling behind us was pure magic.
+              </p>
+              <div class="card-footnote">
+                <span class="card-heart">♥</span> The day the horizon felt endless
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- CHAPTER 4: Siddhartha Hackathon & First Kiss (Landscape - Both standing side-by-side) -->
+        <article class="timeline-item reversed" data-index="4">
+          <div class="timeline-marker">
+            <span class="marker-dot"></span>
+            <span class="marker-num">04</span>
+          </div>
+          <div class="timeline-card tilt-card is-landscape" data-tilt>
+            <div class="card-glow"></div>
+            <div class="card-media is-landscape">
+              <div class="card-media-backdrop" style="background-image: url('our first hackathon and first kiss day.jpg');"></div>
+              <img src="our first hackathon and first kiss day.jpg" alt="Siddhartha college hackathon and our first kiss day" loading="lazy" class="card-img" />
+              <div class="media-overlay">
+                <button type="button" class="zoom-btn" data-full="our first hackathon and first kiss day.jpg" data-caption="Siddhartha Hackathon — And our secret first kiss" aria-label="View photo in full size">
+                  🔍 View Full
+                </button>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="card-meta">
+                <span class="meta-tag">Hackathon</span>
+                <span class="meta-dot">•</span>
+                <span class="meta-place">Siddhartha Campus</span>
+              </div>
+              <h3 class="card-title">Siddhartha Hackathon & A Secret First</h3>
+              <p class="card-text">
+                Between the lines of code, the competition pressure, and the giant Siddhartha campus letters, we shared our very first kiss. A quiet, precious secret that belonged only to the two of us.
+              </p>
+              <div class="card-footnote">
+                <span class="card-heart">♥</span> A milestone sealed with sweetness
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- CHAPTER 5: Her First Birthday (Portrait - Both sitting side-by-side at canteen) -->
+        <article class="timeline-item" data-index="5">
+          <div class="timeline-marker">
+            <span class="marker-dot"></span>
+            <span class="marker-num">05</span>
+          </div>
+          <div class="timeline-card tilt-card is-portrait" data-tilt>
+            <div class="card-glow"></div>
+            <div class="card-media is-portrait">
+              <div class="card-media-backdrop" style="background-image: url('your first birthday a memorable day.jpg');"></div>
+              <img src="your first birthday a memorable day.jpg" alt="Celebrating your first birthday together at college" loading="lazy" class="card-img" />
+              <div class="media-overlay">
+                <button type="button" class="zoom-btn" data-full="your first birthday a memorable day.jpg" data-caption="Celebrating You — Your birthday, a memorable day" aria-label="View photo in full size">
+                  🔍 View Full
+                </button>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="card-meta">
+                <span class="meta-tag">Celebration</span>
+                <span class="meta-dot">•</span>
+                <span class="meta-place">Your Special Day</span>
+              </div>
+              <h3 class="card-title">Celebrating You</h3>
+              <p class="card-text">
+                You looked so graceful in your floral dress, smiling with that gentle glow. Sitting by the canteen, sharing treats and celebrating you will forever remain one of my favorite traditions.
+              </p>
+              <div class="card-footnote">
+                <span class="card-heart">♥</span> The brightest smile on your special day
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- CHAPTER 6: Last Hackathon Together (Landscape - Both side-by-side with badges) -->
+        <article class="timeline-item reversed" data-index="6">
+          <div class="timeline-marker">
+            <span class="marker-dot"></span>
+            <span class="marker-num">06</span>
+          </div>
+          <div class="timeline-card tilt-card is-landscape" data-tilt>
+            <div class="card-glow"></div>
+            <div class="card-media is-landscape">
+              <div class="card-media-backdrop" style="background-image: url('our last hackathon together .jpg');"></div>
+              <img src="our last hackathon together .jpg" alt="Our last hackathon together at IEEE Genesis event" loading="lazy" class="card-img" />
+              <div class="media-overlay">
+                <button type="button" class="zoom-btn" data-full="our last hackathon together .jpg" data-caption="Partners in Code & in Heart — IEEE Genesis" aria-label="View photo in full size">
+                  🔍 View Full
+                </button>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="card-meta">
+                <span class="meta-tag">IEEE Genesis</span>
+                <span class="meta-dot">•</span>
+                <span class="meta-place">Teammates & Partners</span>
+              </div>
+              <h3 class="card-title">Partners in Code & in Heart</h3>
+              <p class="card-text">
+                Lanyards, sleepless nights, brainstorming and debugging side-by-side. You were never just a teammate—you were my greatest supporter, my favorite mind to build with, and my partner in every step.
+              </p>
+              <div class="card-footnote">
+                <span class="card-heart">♥</span> A partnership I deeply cherish
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- THINGS I ADMIRE ABOUT YOU -->
+    <section class="cherish-section" id="cherish">
+      <div class="section-header">
+        <span class="section-tag">Little Reminders</span>
+        <h2 class="section-title">Things I Admire About You</h2>
+        <p class="section-desc">Qualities you carry so effortlessly, Sushma.</p>
+      </div>
+
+      <div class="cherish-grid">
+        <div class="cherish-card">
+          <div class="cherish-icon">✨</div>
+          <h3 class="cherish-title">Your Radiant Smile</h3>
+          <p class="cherish-text">The warm, infectious way you smile that effortlessly brings calm and happiness to anyone around you.</p>
+        </div>
+
+        <div class="cherish-card">
+          <div class="cherish-icon">💡</div>
+          <h3 class="cherish-title">Your Brilliant Mind</h3>
+          <p class="cherish-text">The sharp focus, creativity, and determination you bring into hackathons, ideas, and everything you set your mind to.</p>
+        </div>
+
+        <div class="cherish-card">
+          <div class="cherish-icon">🌸</div>
+          <h3 class="cherish-title">Your Gentle Grace</h3>
+          <p class="cherish-text">How naturally kind and sincere you are. Your empathy and the dignity you carry yourself with in every situation.</p>
+        </div>
+
+        <div class="cherish-card">
+          <div class="cherish-icon">🕊️</div>
+          <h3 class="cherish-title">Our Shared Laughter</h3>
+          <p class="cherish-text">The unscripted inside jokes, the tired late-night chuckles during projects, and the ease of simply sitting together.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- THE LETTER SECTION (QUIET, SINCERE, RESPECTFUL) -->
+    <section class="letter-section" id="letter">
+      <div class="letter-wrapper">
+        <div class="letter-seal" aria-hidden="true">
+          <span>💌</span>
+        </div>
+        
+        <div class="letter-card">
+          <div class="letter-header">
+            <span class="letter-date">A Quiet Note</span>
+            <h2 class="letter-title">Dear Sushma,</h2>
+          </div>
+
+          <div class="letter-body">
+            <p>
+              Looking back at our journey, I am filled with genuine gratitude for every single memory we shared. You brought laughter, warmth, and light into my life, and being by your side taught me so much about companionship and true care.
+            </p>
+            <p>
+              I also know that along the way, I made mistakes. There were moments where I should have listened more closely, understood your feelings more deeply, and acted with greater patience. I take full responsibility for where I fell short, and I am sincerely sorry for any hurt I caused you.
+            </p>
+            <p>
+              More than anything, I want you to know how deeply I respect who you are. Whatever tomorrow brings, my deepest hope for you is boundless peace, happiness, and every success in the dreams you chase.
+            </p>
+          </div>
+
+          <div class="letter-closing">
+            <p class="closing-sign">With all my respect and warmth,</p>
+            <p class="closing-name">Always wishing the very best for you</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENDING: LOW-PRESSURE, GENTLE CLOSURE -->
+    <section class="ending-section" id="ending">
+      <div class="ending-card">
+        <div class="ending-heart">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+        </div>
+        <h3 class="ending-heading">If you'd ever like to talk, I'm here.</h3>
+        <p class="ending-text">No pressure, no expectations. Take all the time and space you need.</p>
+        
+        <div class="ending-lock-prompt">
+          <button type="button" id="re-lock-btn" class="secondary-btn">
+            🔒 Lock Page
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <p>Created with care • For Sushma</p>
+    </footer>
+
+  </main>
+
+  <!-- LIGHTBOX MODAL FOR PHOTO EXPANSION -->
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="lightbox-backdrop"></div>
+    <div class="lightbox-content">
+      <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Close photo">✕</button>
+      <img src="" alt="" id="lightbox-img" class="lightbox-img" />
+      <div class="lightbox-caption" id="lightbox-caption"></div>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script src="app.js"></script>
+</body>
+</html>
